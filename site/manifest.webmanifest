@@ -1,0 +1,8 @@
+{
+  "name": "F3 — підготовка до іспиту",
+  "short_name": "F3",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#16243b"
+}

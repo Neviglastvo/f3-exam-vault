@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#16243b">
+    <meta name="description" content="Матеріали для вступного іспиту F3">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="style.css">
+    <title>F3 — підготовка до іспиту</title>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#top">F3 <span>Підготовка</span></a>
+      <label class="search"><span class="visually-hidden">Пошук</span><input id="search" type="search" placeholder="Знайти тему або термін" autocomplete="off"></label>
+      <button class="offline" id="offline" type="button">Завантажити для офлайн</button>
+    </header>
+    <div class="layout" id="top">
+      <aside class="sidebar" aria-label="Зміст">
+        <nav id="navigation"><p class="loading">Завантажую зміст…</p></nav>
+      </aside>
+      <main>
+        <div class="intro">
+          <p class="eyebrow">ВСТУПНИЙ ІСПИТ</p>
+          <h1>F3 — вся база в одному місці</h1>
+          <p>Шукай тему, переходь за посиланнями та відкривай відповіді лише після власної спроби.</p>
+          <p class="status" id="status" aria-live="polite">Готую матеріали…</p>
+        </div>
+        <article id="notes" aria-live="polite"></article>
+      </main>
+    </div>
+    <template id="empty"><p class="empty">Нічого не знайдено.</p></template>
+    <script src="app.js" defer></script>
+  </body>
+</html>

@@ -4,7 +4,8 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-MD_FILES = sorted(p for p in ROOT.rglob("*.md") if ".git" not in p.parts)
+EXCLUDED_PARTS = {".git", "_site"}
+MD_FILES = sorted(p for p in ROOT.rglob("*.md") if not EXCLUDED_PARTS.intersection(p.parts))
 TEXT = {p: p.read_text(encoding="utf-8") for p in MD_FILES}
 
 
@@ -50,7 +51,7 @@ ambiguous_names = {
 attachments = {
     path.name.casefold()
     for path in ROOT.rglob("*")
-    if path.is_file() and path.suffix.lower() != ".md" and ".git" not in path.parts
+    if path.is_file() and path.suffix.lower() != ".md" and not EXCLUDED_PARTS.intersection(path.parts)
 }
 
 broken: list[tuple[Path, str]] = []
