@@ -2,11 +2,23 @@ const state = { notes: [], rendered: [], noteByName: new Map() };
 
 const notesElement = document.querySelector("#notes");
 const navigationElement = document.querySelector("#navigation");
+const mobileNavigationElement = document.querySelector("#mobile-navigation");
 const statusElement = document.querySelector("#status");
 const searchElement = document.querySelector("#search");
-const offlineButton = document.querySelector("#offline");
-const resetCacheButton = document.querySelector("#reset-cache");
+const mobileSearchElement = document.querySelector("#mobile-search");
+const offlineButtons = [...document.querySelectorAll(".offline")];
+const resetCacheButtons = [...document.querySelectorAll(".reset-cache")];
 const previewElement = document.querySelector("#link-preview");
+const mobileMenu = document.querySelector("#mobile-menu");
+const mobileMenuToggle = document.querySelector("#mobile-menu-toggle");
+const mobileMenuClose = document.querySelector("#mobile-menu-close");
+const mobilePreview = document.querySelector("#mobile-preview");
+const mobilePreviewClose = document.querySelector("#mobile-preview-close");
+const mobilePreviewTitle = document.querySelector("#mobile-preview-title");
+const mobilePreviewText = document.querySelector("#mobile-preview-text");
+const mobilePreviewOpen = document.querySelector("#mobile-preview-open");
+
+const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
 
 const slugify = (text) => text.toLowerCase().normalize("NFKD")
   .replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "");
@@ -104,7 +116,9 @@ function renderNavigation(notes) {
     if (!groups.has(group)) groups.set(group, []);
     groups.get(group).push(note);
   }
-  navigationElement.innerHTML = [...groups].map(([group, items]) => `<section><h2>${escapeHtml(group)}</h2>${items.map((note) => `<a href="#note-${note.slug}">${escapeHtml(note.title)}</a>`).join("")}</section>`).join("");
+  const markup = [...groups].map(([group, items]) => `<section><h2>${escapeHtml(group)}</h2>${items.map((note) => `<a href="#note-${note.slug}">${escapeHtml(note.title)}</a>`).join("")}</section>`).join("");
+  navigationElement.innerHTML = markup;
+  mobileNavigationElement.innerHTML = markup;
 }
 
 function routeLink(step, relation) {
@@ -118,8 +132,10 @@ function renderRoute(note) {
   return `<nav class="learning-route" aria-label="Маршрут навчання"><a href="#note-${note.route.moc.slug}">Маршрут: ${escapeHtml(note.route.moc.title)}</a>${previous ? `<span>← ${previous}</span>` : ""}${next ? `<span>→ ${next}</span>` : ""}</nav>`;
 }
 
-function filterNotes() {
-  const query = searchElement.value.trim().toLocaleLowerCase("uk");
+function filterNotes(source = searchElement) {
+  const query = source.value.trim().toLocaleLowerCase("uk");
+  if (searchElement !== source) searchElement.value = source.value;
+  if (mobileSearchElement !== source) mobileSearchElement.value = source.value;
   for (const entry of state.rendered) {
     entry.element.hidden = Boolean(query) && !entry.searchText.includes(query);
   }
@@ -134,6 +150,7 @@ function previewText(target) {
 }
 
 function showPreview(link) {
+  if (isMobile()) return;
   const noteSlug = link.dataset.previewNote;
   const heading = link.dataset.previewHeading;
   const target = document.querySelector(heading ? `#note-${noteSlug}--${slugify(heading)}` : `#note-${noteSlug}--title`);
@@ -148,6 +165,18 @@ function showPreview(link) {
   link.setAttribute("aria-describedby", "link-preview");
 }
 
+function showMobilePreview(link) {
+  const noteSlug = link.dataset.previewNote;
+  const heading = link.dataset.previewHeading;
+  const target = document.querySelector(heading ? `#note-${noteSlug}--${slugify(heading)}` : `#note-${noteSlug}--title`);
+  if (!target) return false;
+  mobilePreviewTitle.textContent = target.textContent;
+  mobilePreviewText.textContent = previewText(target);
+  mobilePreviewOpen.href = link.href;
+  mobilePreview.showModal();
+  return true;
+}
+
 function hidePreview(link) {
   previewElement.hidden = true;
   link?.removeAttribute("aria-describedby");
@@ -159,6 +188,9 @@ function installPreviews() {
     link.addEventListener("pointerleave", () => hidePreview(link));
     link.addEventListener("focus", () => showPreview(link));
     link.addEventListener("blur", () => hidePreview(link));
+    link.addEventListener("click", (event) => {
+      if (isMobile() && showMobilePreview(link)) event.preventDefault();
+    });
   }
 }
 
@@ -231,11 +263,30 @@ async function load() {
   statusElement.textContent = `Нотаток: ${state.rendered.length}`;
 }
 
-searchElement.addEventListener("input", filterNotes);
+function closeMobileMenu() {
+  if (mobileMenu.open) mobileMenu.close();
+  mobileMenuToggle.setAttribute("aria-expanded", "false");
+}
 
-resetCacheButton.addEventListener("click", async () => {
-  resetCacheButton.disabled = true;
-  resetCacheButton.textContent = "Скидаю…";
+mobileMenuToggle.addEventListener("click", () => {
+  mobileMenu.showModal();
+  mobileMenuToggle.setAttribute("aria-expanded", "true");
+  mobileSearchElement.focus();
+});
+mobileMenuClose.addEventListener("click", closeMobileMenu);
+mobileMenu.addEventListener("close", () => mobileMenuToggle.setAttribute("aria-expanded", "false"));
+mobileNavigationElement.addEventListener("click", (event) => {
+  if (event.target.closest("a")) closeMobileMenu();
+});
+mobilePreviewClose.addEventListener("click", () => mobilePreview.close());
+mobilePreviewOpen.addEventListener("click", () => mobilePreview.close());
+
+searchElement.addEventListener("input", () => filterNotes(searchElement));
+mobileSearchElement.addEventListener("input", () => filterNotes(mobileSearchElement));
+
+async function resetCache(button) {
+  for (const item of resetCacheButtons) item.disabled = true;
+  button.textContent = "Скидаю…";
   statusElement.textContent = "Скидаю кеш сайту й перезавантажую…";
   try {
     const registration = await navigator.serviceWorker?.getRegistration();
@@ -247,21 +298,23 @@ resetCacheButton.addEventListener("click", async () => {
     next.searchParams.set("cache-reset", Date.now());
     window.location.replace(next);
   }
-});
+}
+
+for (const button of resetCacheButtons) button.addEventListener("click", () => resetCache(button));
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
   navigator.serviceWorker.addEventListener("message", (event) => {
-    if (event.data?.type === "CACHE_COMPLETE") { offlineButton.disabled = false; offlineButton.textContent = "Збережено для офлайн"; }
-    if (event.data?.type === "CACHE_FAILED") { offlineButton.disabled = false; offlineButton.textContent = "Не вдалося — спробуй ще"; }
+    if (event.data?.type === "CACHE_COMPLETE") for (const button of offlineButtons) { button.disabled = false; button.textContent = "Збережено для офлайн"; }
+    if (event.data?.type === "CACHE_FAILED") for (const button of offlineButtons) { button.disabled = false; button.textContent = "Не вдалося — спробуй ще"; }
   });
-  offlineButton.addEventListener("click", async () => {
-    offlineButton.disabled = true; offlineButton.textContent = "Завантажую…";
+  for (const button of offlineButtons) button.addEventListener("click", async () => {
+    for (const item of offlineButtons) { item.disabled = true; item.textContent = "Завантажую…"; }
     const registration = await navigator.serviceWorker.ready;
     (registration.active || navigator.serviceWorker.controller)?.postMessage({ type: "CACHE_ALL" });
   });
 } else {
-  offlineButton.hidden = true;
+  for (const button of offlineButtons) button.hidden = true;
 }
 
 load().catch(() => { statusElement.textContent = "Не вдалося завантажити матеріали."; });

@@ -16,6 +16,7 @@
       <label class="search"><span class="visually-hidden">Пошук</span><input id="search" type="search" placeholder="Знайти тему або термін" autocomplete="off"></label>
       <button class="offline" id="offline" type="button">Завантажити для офлайн</button>
       <button class="reset-cache" id="reset-cache" type="button">Скинути кеш</button>
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu">Зміст</button>
     </header>
     <div class="layout" id="top">
       <aside class="sidebar" aria-label="Зміст">
@@ -33,6 +34,26 @@
     </div>
     <template id="empty"><p class="empty">Нічого не знайдено.</p></template>
     <div class="link-preview" id="link-preview" role="tooltip" hidden></div>
+    <dialog class="mobile-menu" id="mobile-menu" aria-label="Зміст">
+      <header class="mobile-dialog-header">
+        <strong>Зміст</strong>
+        <button class="dialog-close" id="mobile-menu-close" type="button" aria-label="Закрити зміст">×</button>
+      </header>
+      <label class="mobile-search"><span class="visually-hidden">Пошук</span><input id="mobile-search" type="search" placeholder="Знайти тему або термін" autocomplete="off"></label>
+      <nav id="mobile-navigation"><p class="loading">Завантажую зміст…</p></nav>
+      <div class="mobile-actions">
+        <button class="offline" id="mobile-offline" type="button">Завантажити для офлайн</button>
+        <button class="reset-cache" id="mobile-reset-cache" type="button">Скинути кеш</button>
+      </div>
+    </dialog>
+    <dialog class="mobile-preview" id="mobile-preview" aria-label="Попередній перегляд">
+      <header class="mobile-dialog-header">
+        <strong id="mobile-preview-title"></strong>
+        <button class="dialog-close" id="mobile-preview-close" type="button" aria-label="Закрити попередній перегляд">×</button>
+      </header>
+      <p id="mobile-preview-text"></p>
+      <a class="preview-open" id="mobile-preview-open" href="#">Відкрити тему</a>
+    </dialog>
     <script src="vendor/katex/katex.min.js" defer></script>
     <script src="app.js" defer></script>
   </body>
