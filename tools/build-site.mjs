@@ -28,6 +28,11 @@ function aliasesFrom(markdown) {
   return inline ? inline.split(",").map((value) => value.trim().replace(/^['"]|['"]$/g, "")).filter(Boolean) : [];
 }
 
+function frontmatterValue(markdown, key) {
+  const frontmatter = markdown.match(/^---\n([\s\S]*?)\n---/s)?.[1] || "";
+  return frontmatter.match(new RegExp(`^${key}:\\s*(.+)$`, "m"))?.[1]?.trim() || "";
+}
+
 function slugify(value) {
   return createHash("sha1").update(value).digest("hex").slice(0, 10);
 }
@@ -45,6 +50,7 @@ await cp(path.join(root, "node_modules", "katex", "dist", "katex.min.js"), path.
 await cp(path.join(root, "node_modules", "katex", "dist", "fonts"), path.join(output, "vendor", "katex", "fonts"), { recursive: true });
 
 const notes = [];
+const markdownBySlug = new Map();
 for (const file of markdownFiles) {
   const relative = path.relative(root, file);
   const markdown = await readFile(file, "utf8");
@@ -52,14 +58,17 @@ for (const file of markdownFiles) {
   await mkdir(path.dirname(destination), { recursive: true });
   await cp(file, destination);
   const name = path.basename(relative, ".md");
-  notes.push({
+  const note = {
     name,
     title: titleFrom(markdown, name),
     aliases: aliasesFrom(markdown),
     section: path.dirname(relative) === "." ? "Навігація" : path.dirname(relative),
     slug: slugify(relative),
+    type: frontmatterValue(markdown, "type"),
     url: `notes/${relative.split(path.sep).map(encodeURIComponent).join("/")}`,
-  });
+  };
+  notes.push(note);
+  markdownBySlug.set(note.slug, markdown);
 }
 const attachmentMap = {};
 for (const file of attachments) {
@@ -70,6 +79,24 @@ for (const file of attachments) {
   attachmentMap[path.basename(relative).toLocaleLowerCase("uk")] = `notes/${relative.split(path.sep).map(encodeURIComponent).join("/")}`;
 }
 notes.sort((a, b) => a.section.localeCompare(b.section, "uk") || a.title.localeCompare(b.title, "uk"));
+const notesByName = new Map();
+for (const note of notes) for (const name of [note.name, note.title, ...note.aliases]) notesByName.set(name.toLocaleLowerCase("uk"), note);
+for (const moc of notes.filter((note) => note.type === "moc")) {
+  const route = [];
+  for (const raw of markdownBySlug.get(moc.slug).matchAll(/\[\[([^\]|#]+)/g)) {
+    const target = notesByName.get(raw[1].trim().toLocaleLowerCase("uk"));
+    if (target && target.slug !== moc.slug && !route.includes(target)) route.push(target);
+  }
+  route.forEach((note, index) => {
+    if (!note.route) {
+      note.route = {
+        moc: { slug: moc.slug, title: moc.title },
+        previous: route[index - 1] ? { slug: route[index - 1].slug, title: route[index - 1].title } : null,
+        next: route[index + 1] ? { slug: route[index + 1].slug, title: route[index + 1].title } : null,
+      };
+    }
+  });
+}
 await writeFile(path.join(output, "notes.json"), JSON.stringify({ notes, attachments: attachmentMap }, null, 2));
 
 const deployFiles = await walk(output);

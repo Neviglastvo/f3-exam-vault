@@ -107,6 +107,17 @@ function renderNavigation(notes) {
   navigationElement.innerHTML = [...groups].map(([group, items]) => `<section><h2>${escapeHtml(group)}</h2>${items.map((note) => `<a href="#note-${note.slug}">${escapeHtml(note.title)}</a>`).join("")}</section>`).join("");
 }
 
+function routeLink(step, relation) {
+  return step ? `<a href="#note-${step.slug}" data-preview-note="${step.slug}" data-preview-heading="">${relation}: ${escapeHtml(step.title)}</a>` : "";
+}
+
+function renderRoute(note) {
+  if (!note.route) return "";
+  const previous = routeLink(note.route.previous, "Попередній крок");
+  const next = routeLink(note.route.next, "Наступний крок");
+  return `<nav class="learning-route" aria-label="Маршрут навчання"><a href="#note-${note.route.moc.slug}">Маршрут: ${escapeHtml(note.route.moc.title)}</a>${previous ? `<span>← ${previous}</span>` : ""}${next ? `<span>→ ${next}</span>` : ""}</nav>`;
+}
+
 function filterNotes() {
   const query = searchElement.value.trim().toLocaleLowerCase("uk");
   for (const entry of state.rendered) {
@@ -151,6 +162,53 @@ function installPreviews() {
   }
 }
 
+function installConceptLinks() {
+  const glossary = state.notes.find((note) => note.name === "Глосарій");
+  const glossaryElement = document.querySelector(`#note-${glossary?.slug}`);
+  if (!glossary || !glossaryElement) return;
+  const concepts = [...glossaryElement.querySelectorAll("h3")]
+    .map((heading) => ({ term: heading.textContent.trim(), href: `#${heading.id}` }))
+    .filter(({ term }) => term.length >= 3)
+    .sort((left, right) => right.term.length - left.term.length);
+  if (!concepts.length) return;
+  const escaped = concepts.map(({ term }) => term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const matcher = new RegExp(`(?<![\\p{L}\\p{N}])(${escaped.join("|")})(?![\\p{L}\\p{N}])`, "giu");
+  const blocked = "A,CODE,PRE,SCRIPT,STYLE,H1,H2,H3,H4,H5,H6,SUMMARY".split(",");
+  const terms = new Map(concepts.map((concept) => [concept.term.toLocaleLowerCase("uk"), concept]));
+
+  for (const note of state.rendered) {
+    if (note.element === glossaryElement) continue;
+    const walker = document.createTreeWalker(note.element, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+    for (const textNode of textNodes) {
+      const parent = textNode.parentElement;
+      if (!parent || blocked.includes(parent.tagName) || parent.closest("a, .math-display, details")) continue;
+      const text = textNode.textContent;
+      matcher.lastIndex = 0;
+      if (!matcher.test(text)) continue;
+      matcher.lastIndex = 0;
+      const fragment = document.createDocumentFragment();
+      let offset = 0;
+      for (const match of text.matchAll(matcher)) {
+        const concept = terms.get(match[0].toLocaleLowerCase("uk"));
+        if (!concept) continue;
+        fragment.append(text.slice(offset, match.index));
+        const link = document.createElement("a");
+        link.className = "auto-concept";
+        link.href = concept.href;
+        link.dataset.previewNote = glossary.slug;
+        link.dataset.previewHeading = concept.term;
+        link.textContent = match[0];
+        fragment.append(link);
+        offset = match.index + match[0].length;
+      }
+      fragment.append(text.slice(offset));
+      textNode.replaceWith(fragment);
+    }
+  }
+}
+
 async function load() {
   const manifest = await fetch("notes.json").then((response) => response.json());
   state.notes = manifest.notes;
@@ -163,11 +221,12 @@ async function load() {
     const element = document.createElement("section");
     element.className = "note";
     element.id = `note-${note.slug}`;
-    element.innerHTML = `<p class="note-meta">${escapeHtml(note.section)}</p>${renderMarkdown(source, note)}`;
+    element.innerHTML = `<p class="note-meta">${escapeHtml(note.section)}</p>${renderRoute(note)}${renderMarkdown(source, note)}`;
     fragment.append(element);
     return { element, searchText: `${note.title} ${source}`.toLocaleLowerCase("uk") };
   });
   notesElement.replaceChildren(fragment);
+  installConceptLinks();
   installPreviews();
   statusElement.textContent = `Нотаток: ${state.rendered.length}`;
 }
