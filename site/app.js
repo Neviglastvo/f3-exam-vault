@@ -5,6 +5,7 @@ const navigationElement = document.querySelector("#navigation");
 const statusElement = document.querySelector("#status");
 const searchElement = document.querySelector("#search");
 const offlineButton = document.querySelector("#offline");
+const resetCacheButton = document.querySelector("#reset-cache");
 const previewElement = document.querySelector("#link-preview");
 
 const slugify = (text) => text.toLowerCase().normalize("NFKD")
@@ -172,6 +173,22 @@ async function load() {
 }
 
 searchElement.addEventListener("input", filterNotes);
+
+resetCacheButton.addEventListener("click", async () => {
+  resetCacheButton.disabled = true;
+  resetCacheButton.textContent = "Скидаю…";
+  statusElement.textContent = "Скидаю кеш сайту й перезавантажую…";
+  try {
+    const registration = await navigator.serviceWorker?.getRegistration();
+    await registration?.unregister();
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.filter((name) => name.startsWith("f3-vault-")).map((name) => caches.delete(name)));
+  } finally {
+    const next = new URL(window.location.href);
+    next.searchParams.set("cache-reset", Date.now());
+    window.location.replace(next);
+  }
+});
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");

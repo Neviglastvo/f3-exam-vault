@@ -18,12 +18,15 @@ html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-size: 16px; line-height: 1.65; }
 button, input { font: inherit; }
 
-.topbar { position: sticky; z-index: 4; top: 0; display: grid; grid-template-columns: auto minmax(12rem, 34rem) auto; align-items: center; gap: 1rem; min-height: 4.25rem; padding: .65rem clamp(1rem, 3vw, 3rem); background: color-mix(in srgb, var(--paper) 91%, transparent); border-bottom: 1px solid var(--line); backdrop-filter: blur(12px); }
+.topbar { position: sticky; z-index: 4; top: 0; display: grid; grid-template-columns: auto minmax(12rem, 34rem) auto auto; align-items: center; gap: .7rem; min-height: 4.25rem; padding: .65rem clamp(1rem, 3vw, 3rem); background: color-mix(in srgb, var(--paper) 91%, transparent); border-bottom: 1px solid var(--line); backdrop-filter: blur(12px); }
 .brand { color: var(--navy); font-weight: 800; font-size: 1.2rem; letter-spacing: -.03em; text-decoration: none; white-space: nowrap; }
 .brand span { color: var(--muted); font-weight: 600; }
 .search input { width: 100%; min-height: 2.7rem; padding: .45rem .8rem; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: .65rem; outline-offset: 2px; }
 .offline { min-height: 2.7rem; padding: .45rem .8rem; color: white; background: var(--navy); border: 0; border-radius: .65rem; cursor: pointer; white-space: nowrap; }
 .offline:disabled { opacity: .6; cursor: wait; }
+.reset-cache { min-height: 2.7rem; padding: .45rem .7rem; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: .65rem; cursor: pointer; white-space: nowrap; }
+.reset-cache:hover, .reset-cache:focus-visible { color: var(--ink); border-color: var(--muted); outline: none; }
+.reset-cache:disabled { opacity: .6; cursor: wait; }
 
 .layout { display: grid; grid-template-columns: minmax(15rem, 20rem) minmax(0, 52rem); gap: clamp(1.5rem, 4vw, 4.5rem); max-width: 94rem; margin: 0 auto; padding: 1.5rem clamp(1rem, 3vw, 3rem) 5rem; }
 .sidebar { position: sticky; top: 5.75rem; align-self: start; max-height: calc(100vh - 7rem); overflow: auto; padding-right: .6rem; }
@@ -74,7 +77,8 @@ main { min-width: 0; }
 }
 
 @media (max-width: 760px) {
-  .topbar { grid-template-columns: 1fr auto; }
+  .topbar { grid-template-columns: 1fr auto auto; }
+  .offline, .reset-cache { padding-inline: .55rem; font-size: .875rem; }
   .search { grid-column: 1 / -1; grid-row: 2; }
   .layout { display: block; padding-top: 1rem; }
   .sidebar { position: static; max-height: 15rem; margin: 0 0 1rem; padding: .8rem; background: var(--panel); border: 1px solid var(--line); border-radius: .65rem; }
