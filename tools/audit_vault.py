@@ -84,7 +84,7 @@ notes_without_links = [
 
 learning_notes = []
 for path in MD_FILES:
-    if re.match(r"0[1-5] ", path.parent.name) and "type: moc" not in TEXT[path]:
+    if re.match(r"0[1-9] ", path.parent.name) and "type: moc" not in TEXT[path]:
         learning_notes.append(path)
 
 required_keys = ("topic", "section", "priority", "status", "source_page")
@@ -113,8 +113,10 @@ for path in learning_notes:
     else:
         quality_issues.append((path, "invalid priority"))
     page = re.search(r"(?m)^source_page:\s*(\d+)", fm)
-    if page and not 11 <= int(page.group(1)) <= 22:
+    if re.match(r"0[1-5] ", path.parent.name) and page and not 11 <= int(page.group(1)) <= 22:
         quality_issues.append((path, "source_page outside 11-22"))
+    if re.match(r"0[6-9] ", path.parent.name) and not re.search(r"(?m)^source_document:\s*\S+", fm):
+        quality_issues.append((path, "missing source_document"))
     for block in required_blocks:
         if block not in text:
             quality_issues.append((path, f"missing block {block}"))
@@ -138,6 +140,19 @@ coverage = Counter(
     re.findall(r"(?m)^- \*\*(covered|partially covered|missing)\*\*", coverage_text)
 )
 
+ipmms_coverage_text = TEXT[ROOT / "99 Source" / "Покриття білетів ІПММС.md"]
+ipmms_tickets = {
+    int(number): status
+    for number, status in re.findall(
+        r"(?ms)^## Білет (\d+)\n\n- \*\*(covered|partially covered|missing)\*\*",
+        ipmms_coverage_text,
+    )
+}
+ipmms_missing = sorted(set(range(1, 21)) - set(ipmms_tickets))
+ipmms_not_covered = sorted(
+    number for number, status in ipmms_tickets.items() if status != "covered"
+)
+
 print(f"Markdown files: {len(MD_FILES)}")
 print(f"Learning notes: {len(learning_notes)}")
 print(f"Priorities: P0={priorities['P0']}, P1={priorities['P1']}, P2={priorities['P2']}")
@@ -146,6 +161,12 @@ print(
     f"covered={coverage['covered']}, "
     f"partially covered={coverage['partially covered']}, "
     f"missing={coverage['missing']}"
+)
+print(
+    "ІПММС tickets: "
+    f"covered={sum(status == 'covered' for status in ipmms_tickets.values())}, "
+    f"missing={len(ipmms_missing)}, "
+    f"not covered={len(ipmms_not_covered)}"
 )
 print(f"Broken wikilinks: {len(broken)}")
 print(f"Orphan notes: {len(orphans)}")
@@ -166,8 +187,13 @@ for path, issue in quality_issues:
     print(" QUALITY", rel(path), "->", issue)
 for name in missing_exam:
     print(" MISSING_EXAM", name)
+for number in ipmms_missing:
+    print(" IPMMS_MISSING_TICKET", number)
+for number in ipmms_not_covered:
+    print(" IPMMS_NOT_COVERED", number)
 
 failed = any(
-    (broken, orphans, notes_without_links, ambiguous_names, quality_issues, missing_exam)
+    (broken, orphans, notes_without_links, ambiguous_names, quality_issues, missing_exam,
+     ipmms_missing, ipmms_not_covered)
 ) or coverage["partially covered"] or coverage["missing"] or coverage["covered"] == 0
 sys.exit(1 if failed else 0)
