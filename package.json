@@ -1,0 +1,10 @@
+{
+  "name": "f3-exam-vault-site",
+  "private": true,
+  "devDependencies": {
+    "katex": "0.18.7"
+  },
+  "scripts": {
+    "build:site": "node tools/build-site.mjs"
+  }
+}

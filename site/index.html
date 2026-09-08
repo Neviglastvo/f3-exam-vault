@@ -7,6 +7,7 @@
     <meta name="description" content="Матеріали для вступного іспиту F3">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="vendor/katex/katex.min.css">
     <title>F3 — підготовка до іспиту</title>
   </head>
   <body>
@@ -30,6 +31,8 @@
       </main>
     </div>
     <template id="empty"><p class="empty">Нічого не знайдено.</p></template>
+    <div class="link-preview" id="link-preview" role="tooltip" hidden></div>
+    <script src="vendor/katex/katex.min.js" defer></script>
     <script src="app.js" defer></script>
   </body>
 </html>

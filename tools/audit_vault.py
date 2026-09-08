@@ -4,7 +4,7 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-EXCLUDED_PARTS = {".git", "_site"}
+EXCLUDED_PARTS = {".git", "_site", "node_modules"}
 MD_FILES = sorted(p for p in ROOT.rglob("*.md") if not EXCLUDED_PARTS.intersection(p.parts))
 TEXT = {p: p.read_text(encoding="utf-8") for p in MD_FILES}
 

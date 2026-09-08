@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const site = path.join(root, "site");
 const output = path.join(root, "_site");
-const ignored = new Set([".git", ".github", ".obsidian", "site", "tools", "_site", "_templates"]);
+const ignored = new Set([".git", ".github", ".obsidian", "site", "tools", "_site", "_templates", "node_modules"]);
 
 async function walk(directory, files = []) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -39,6 +39,10 @@ const attachments = allFiles.filter((file) => [".pdf", ".docx"].includes(path.ex
 await rm(output, { recursive: true, force: true });
 await mkdir(path.join(output, "notes"), { recursive: true });
 await cp(site, output, { recursive: true });
+await mkdir(path.join(output, "vendor", "katex"), { recursive: true });
+await cp(path.join(root, "node_modules", "katex", "dist", "katex.min.css"), path.join(output, "vendor", "katex", "katex.min.css"));
+await cp(path.join(root, "node_modules", "katex", "dist", "katex.min.js"), path.join(output, "vendor", "katex", "katex.min.js"));
+await cp(path.join(root, "node_modules", "katex", "dist", "fonts"), path.join(output, "vendor", "katex", "fonts"), { recursive: true });
 
 const notes = [];
 for (const file of markdownFiles) {
