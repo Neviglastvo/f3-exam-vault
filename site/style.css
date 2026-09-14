@@ -17,6 +17,8 @@
 html { max-width: 100%; overflow-x: hidden; overflow-x: clip; scroll-behavior: smooth; }
 body { max-width: 100%; margin: 0; overflow-x: hidden; overflow-x: clip; background: var(--paper); color: var(--ink); font-size: 16px; line-height: 1.65; }
 button, input { font: inherit; }
+svg { fill: var(--ink); }
+button svg { fill: currentColor; }
 
 .topbar { position: sticky; z-index: 4; top: 0; display: grid; grid-template-columns: auto minmax(12rem, 34rem) auto auto; align-items: center; gap: .7rem; min-height: 4.25rem; padding: .65rem clamp(1rem, 3vw, 3rem); background: color-mix(in srgb, var(--paper) 91%, transparent); border-bottom: 1px solid var(--line); backdrop-filter: blur(12px); }
 .brand-lockup { display: grid; gap: .05rem; min-width: 0; }
