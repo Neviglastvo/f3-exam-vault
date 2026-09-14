@@ -44,6 +44,18 @@ const attachments = allFiles.filter((file) => [".pdf", ".docx"].includes(path.ex
 await rm(output, { recursive: true, force: true });
 await mkdir(path.join(output, "notes"), { recursive: true });
 await cp(site, output, { recursive: true });
+const buildParts = Object.fromEntries(new Intl.DateTimeFormat("uk-UA", {
+  timeZone: "Europe/Kyiv",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+}).formatToParts(new Date()).filter(({ type }) => type !== "literal").map(({ type, value }) => [type, value]));
+const buildVersion = `${buildParts.day}.${buildParts.month}.${buildParts.year}:${buildParts.hour}.${buildParts.minute}`;
+const indexPath = path.join(output, "index.html");
+await writeFile(indexPath, (await readFile(indexPath, "utf8")).replace("__BUILD_VERSION__", buildVersion));
 await mkdir(path.join(output, "vendor", "katex"), { recursive: true });
 await cp(path.join(root, "node_modules", "katex", "dist", "katex.min.css"), path.join(output, "vendor", "katex", "katex.min.css"));
 await cp(path.join(root, "node_modules", "katex", "dist", "katex.min.js"), path.join(output, "vendor", "katex", "katex.min.js"));
