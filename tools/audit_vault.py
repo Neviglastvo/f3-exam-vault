@@ -95,7 +95,6 @@ required_blocks = (
     "## Іспитовий фокус",
     "**Що запам'ятати:**",
     "**Типова пастка:**",
-    "**Можливі питання:**",
     "## Пов’язані знання",
     "## Самоперевірка",
     "## Джерело програми",
@@ -121,6 +120,8 @@ for path in learning_notes:
     for block in required_blocks:
         if block not in text:
             quality_issues.append((path, f"missing block {block}"))
+    if "**Можливі питання:**" not in text and "**Розгорнута відповідь:**" not in text:
+        quality_issues.append((path, "missing exam prompt or expanded-answer pointer"))
     related = re.search(r"## Пов’язані знання\n(.*?)(?:\n## |\Z)", text, re.S)
     if not related or len(re.findall(r"\[\[", related.group(1))) < 2:
         quality_issues.append((path, "fewer than two related concept links"))
